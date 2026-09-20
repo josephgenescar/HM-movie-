@@ -28,6 +28,9 @@ export default function ProfilePage() {
     );
   }
 
+  const role = user.app_metadata?.role ?? user.user_metadata?.role ?? "user";
+  const roleLabel = role === "admin" ? "Administrateur" : role === "moderator" ? "Modérateur" : role === "editor" ? "Éditeur" : "Utilisateur";
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-hm-bg px-5 py-10">
       <div className="w-full max-w-lg rounded-2xl border border-hm-border bg-hm-surface/60 p-8 shadow-2xl shadow-black/20">
@@ -52,7 +55,7 @@ export default function ProfilePage() {
           </div>
           <div className="flex items-center justify-between">
             <span>Rôle</span>
-            <span className="font-medium text-hm-text">Utilisateur</span>
+            <span className="font-medium text-hm-text">{roleLabel}</span>
           </div>
         </div>
 
