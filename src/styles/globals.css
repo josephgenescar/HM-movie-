@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --font-display: "Space Grotesk", "DM Sans", system-ui, sans-serif;
+}
+
+html,
+body {
+  background: #0a0a0c !important;
+  color: #f5f5f7 !important;
+  font-family: var(--font-sans);
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Horizontal content rows (carrousels) — hide scrollbar, keep touch scroll */
+.hm-row {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hm-row::-webkit-scrollbar {
+  display: none;
+}
