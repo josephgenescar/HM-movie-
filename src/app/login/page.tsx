@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { ArrowLeft, Mail, LockKeyhole } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { SiteLogo } from "@/components/site-logo";
 import { signInWithEmail } from "@/features/auth/auth-service";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -21,7 +22,7 @@ export default function LoginPage() {
 
     try {
       await signInWithEmail({ email, password });
-      router.push("/");
+      router.push(searchParams.get("redirect") || "/");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue lors de la connexion.");

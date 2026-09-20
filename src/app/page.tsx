@@ -147,7 +147,15 @@ export default function HomePage() {
           </div>
         </header>
 
-        <section className="px-4 pb-10 pt-2 sm:px-6 lg:px-8">
+        <section
+          className="relative overflow-hidden px-4 pb-10 pt-2 sm:px-6 lg:px-8"
+          style={{
+            backgroundImage:
+              "linear-gradient(90deg, rgba(10,10,12,0.96) 0%, rgba(10,10,12,0.78) 42%, rgba(10,10,12,0.45) 100%), linear-gradient(180deg, rgba(92,12,28,0.18), rgba(10,10,12,0.9)), url('/image/cinema-background.jpeg')",
+            backgroundPosition: "center",
+            backgroundSize: "cover"
+          }}
+        >
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1 overflow-hidden">
               <SiteLogo className="h-[clamp(14rem,30vw,24rem)] w-[clamp(14rem,30vw,24rem)]" />
@@ -157,15 +165,6 @@ export default function HomePage() {
                 <Search size={18} />
               </Link>
             </div>
-          </div>
-
-          <div className="mt-3 flex flex-wrap items-center gap-3 text-[15px] text-hm-muted sm:gap-5">
-            <Link href="/" className="transition hover:text-hm-text">Accueil</Link>
-            <Link href="/movies" className="transition hover:text-hm-text">Films</Link>
-            <Link href="/series" className="transition hover:text-hm-text">Séries</Link>
-            <Link href="/premium" className="transition hover:text-hm-text">Premium</Link>
-            <Link href="/watchlist" className="transition hover:text-hm-text">Ma liste</Link>
-            <Link href="/ai" className="transition hover:text-hm-text">AI Studio</Link>
           </div>
 
           <div className="mt-8 flex items-center gap-4 sm:mt-10">

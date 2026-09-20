@@ -42,6 +42,14 @@ export function createClient() {
       auth: {
         getUser: async () => ({ data: { user: null }, error: null }),
         getSession: async () => ({ data: { session: null }, error: null }),
+        signInWithPassword: async () => ({
+          data: { user: null, session: null },
+          error: new Error("Supabase environment variables are missing. Add them to .env.local and restart the dev server.")
+        }),
+        signUp: async () => ({
+          data: { user: null, session: null },
+          error: new Error("Supabase environment variables are missing. Add them to .env.local and restart the dev server.")
+        }),
         onAuthStateChange: (_event: string, _session: any) => ({
           data: { subscription: { unsubscribe: () => undefined } }
         }),

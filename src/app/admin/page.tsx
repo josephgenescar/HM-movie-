@@ -34,7 +34,11 @@ export default function AdminDashboardPage() {
         <ShieldCheck className="mx-auto mb-4 text-hm-gold" size={30} />
         <h2 className="text-2xl font-bold text-hm-text">Accès non autorisé</h2>
         <p className="mt-3 text-hm-muted">Cette zone est réservée aux administrateurs de la plateforme.</p>
-        <Link href="/" className="mt-6 inline-flex rounded-full bg-hm-text px-5 py-3 text-sm font-semibold text-hm-bg">Retour à l&apos;accueil</Link>
+        {!user ? (
+          <Link href="/login?redirect=/admin" className="mt-6 inline-flex rounded-full bg-hm-text px-5 py-3 text-sm font-semibold text-hm-bg">Se connecter</Link>
+        ) : (
+          <Link href="/" className="mt-6 inline-flex rounded-full bg-hm-text px-5 py-3 text-sm font-semibold text-hm-bg">Retour à l&apos;accueil</Link>
+        )}
       </div>
     );
   }
