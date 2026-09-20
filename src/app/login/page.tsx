@@ -22,7 +22,7 @@ export default function LoginPage() {
 
     try {
       await signInWithEmail({ email, password });
-      router.push(searchParams.get("redirect") || "/");
+      router.push(searchParams.get("redirect") === "/admin" ? "/admin" : "/");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue lors de la connexion.");
