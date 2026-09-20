@@ -19,6 +19,13 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 3px solid #e0ad58;
+  outline-offset: 4px;
+}
+
 /* Horizontal content rows (carrousels) — hide scrollbar, keep touch scroll */
 .hm-row {
   scrollbar-width: none;
