@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const plans = [
   { name: "Free", price: "0 HTG", users: 812, status: "Actif" },
-  { name: "Premium", price: "799 HTG", users: 412, status: "Actif" },
+  { name: "Premium", price: "1499 HTG", users: 412, status: "Actif" },
   { name: "Family", price: "1499 HTG", users: 84, status: "Brouillon" }
 ];
 

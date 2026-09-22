@@ -27,7 +27,7 @@ export const fallbackPlans: SubscriptionPlan[] = [
     code: "premium",
     name: "Premium",
     description: "Pour regarder sans limites",
-    price_monthly: 799,
+    price_monthly: 1499,
     currency: "HTG",
     is_active: true,
     features: ["Catalogue complet", "Qualité 4K Ultra HD", "Sans publicité", "Téléchargements hors ligne"]

@@ -63,7 +63,7 @@ export default function PremiumPage() {
                   <h2 className="text-xl font-semibold text-hm-text">{plan.name}</h2>
                   <p className="mt-2 text-sm text-hm-muted">{plan.description}</p>
                   <p className="mt-7 text-4xl font-semibold text-hm-text">
-                    {plan.price_monthly === 0 ? "0" : `${(plan.price_monthly / 100).toFixed(2)}`}
+                    {plan.price_monthly.toLocaleString("fr-FR")}
                     <span className="text-base font-normal text-hm-muted"> {plan.currency} / mois</span>
                   </p>
                   <button

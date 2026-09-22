@@ -54,3 +54,8 @@ drop policy if exists "Admins delete media files" on storage.objects;
 create policy "Admins delete media files"
   on storage.objects for delete
   using (bucket_id = 'media' and (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
+
+drop policy if exists "Authenticated users upload AI references" on storage.objects;
+create policy "Authenticated users upload AI references"
+  on storage.objects for insert
+  with check (bucket_id = 'media' and (storage.foldername(name))[1] = 'ai-reference' and auth.role() = 'authenticated');

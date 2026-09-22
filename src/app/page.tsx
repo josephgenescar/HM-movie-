@@ -117,7 +117,6 @@ export default function HomePage() {
             <Link href="/series" className="transition hover:text-hm-text">Séries</Link>
             <Link href="/premium" className="transition hover:text-hm-text">Premium</Link>
             <Link href="/watchlist" className="transition hover:text-hm-text">Ma liste</Link>
-            <Link href="/ai" className="transition hover:text-hm-text">AI Studio</Link>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/notifications" aria-label="Notifications" className="grid h-10 w-10 place-items-center rounded-full border border-hm-border bg-hm-surface text-hm-text transition hover:border-hm-accent">
