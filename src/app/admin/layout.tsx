@@ -1,5 +1,9 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { BarChart3, Bot, CreditCard, Film, ImageIcon, Settings, ShieldCheck, Users } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
 
 const navItems: Array<{ href: "/admin" | "/admin/users" | "/admin/content" | "/admin/media" | "/admin/subscriptions" | "/admin/settings" | "/ai"; label: string; icon: typeof BarChart3 }> = [
   { href: "/admin", label: "Vue d'ensemble", icon: BarChart3 },
@@ -11,7 +15,18 @@ const navItems: Array<{ href: "/admin" | "/admin/users" | "/admin/content" | "/a
   { href: "/ai", label: "AI Studio", icon: Bot }
 ];
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login?redirect=/admin");
+  }
+
+  if (user.app_metadata?.role !== "admin") {
+    redirect("/");
+  }
+
   return (
     <main className="min-h-screen bg-hm-bg px-5 py-6 text-hm-text sm:px-8 lg:px-10">
       <div className="mx-auto max-w-7xl">

@@ -10,7 +10,7 @@ export async function getCurrentUserRole(): Promise<AdminRole> {
     return "user";
   }
 
-  const role = (data.user.app_metadata?.role ?? data.user.user_metadata?.role ?? "user") as AdminRole;
+  const role = (data.user.app_metadata?.role ?? "user") as AdminRole;
   return ["user", "admin", "moderator", "editor"].includes(role) ? role : "user";
 }
 
