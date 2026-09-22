@@ -37,6 +37,10 @@ export function createClient() {
 
   if (!url || !anonKey) {
     console.warn("Supabase environment variables are missing. Falling back to demo mode.");
+    const missing = [
+      !url ? "NEXT_PUBLIC_SUPABASE_URL" : null,
+      !anonKey ? "NEXT_PUBLIC_SUPABASE_ANON_KEY" : null
+    ].filter(Boolean).join(" and ");
 
     return {
       auth: {
@@ -44,11 +48,11 @@ export function createClient() {
         getSession: async () => ({ data: { session: null }, error: null }),
         signInWithPassword: async () => ({
           data: { user: null, session: null },
-          error: new Error("Supabase environment variables are missing. Add them to .env.local and restart the dev server.")
+          error: new Error(`Missing ${missing}. Add it to .env.local and restart the dev server.`)
         }),
         signUp: async () => ({
           data: { user: null, session: null },
-          error: new Error("Supabase environment variables are missing. Add them to .env.local and restart the dev server.")
+          error: new Error(`Missing ${missing}. Add it to .env.local and restart the dev server.`)
         }),
         onAuthStateChange: (_event: string, _session: any) => ({
           data: { subscription: { unsubscribe: () => undefined } }

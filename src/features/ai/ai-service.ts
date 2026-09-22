@@ -19,6 +19,19 @@ export interface AiGenerationJob {
   createdAt: string;
 }
 
+export type AiGenerationType = "script" | "image" | "video";
+
+export async function requestAiGeneration(input: { type: AiGenerationType; prompt: string; style: string }) {
+  const response = await fetch("/api/ai/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input)
+  });
+  const data = await response.json() as { error?: string; output?: string | null; revisedPrompt?: string | null; provider?: string };
+  if (!response.ok) throw new Error(data.error ?? "AI generation pa mache.");
+  return data;
+}
+
 export interface AiCreditLedger {
   id: string;
   type: "credit" | "debit";

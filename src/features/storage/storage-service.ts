@@ -63,21 +63,30 @@ export async function listStorageAssets(): Promise<StorageAsset[]> {
   const supabase = createClient();
 
   try {
-    const { data, error } = await supabase.storage.from("media").list("", { limit: 50 });
+    const folders: StorageAssetType[] = ["poster", "video", "trailer", "banner"];
+    const results = await Promise.all(folders.map(async (folder) => {
+      const { data, error } = await supabase.storage.from("media").list(folder, { limit: 100 });
+      return { folder, data: data as StorageListItem[] | null, error };
+    }));
+    const assets = results.flatMap(({ folder, data, error }) => {
+      if (error || !data?.length) return [];
 
-    if (error || !data?.length) {
+      return data.filter((item) => item.name).map((item, index) => ({
+        id: item.id ?? `${folder}-${item.name}-${index}`,
+        name: item.name,
+        path: `${folder}/${item.name}`,
+        type: folder,
+        size: (item.metadata?.size ?? 0) / 1024 / 1024,
+        url: getPublicUrl(`${folder}/${item.name}`),
+        createdAt: item.created_at ?? new Date().toISOString()
+      }));
+    });
+
+    if (!assets.length) {
       return fallbackAssets;
     }
 
-    return (data as StorageListItem[]).map((item, index) => ({
-      id: item.id ?? `${item.name}-${index}`,
-      name: item.name,
-      path: item.name,
-      type: inferAssetType(item.name),
-      size: (item.metadata?.size ?? 0) / 1024 / 1024,
-      url: getPublicUrl(item.name),
-      createdAt: item.created_at ?? new Date().toISOString()
-    }));
+    return assets;
   } catch {
     return fallbackAssets;
   }

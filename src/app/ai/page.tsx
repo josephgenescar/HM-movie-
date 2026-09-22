@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Bot, Film, Sparkles, Wand2, Zap, Plus, ArrowRight } from "lucide-react";
-import { createAiProject, generateScene, getAiCreditSummary, getAiProjects, type AiProject } from "@/features/ai/ai-service";
+import { createAiProject, generateScene, getAiCreditSummary, getAiProjects, requestAiGeneration, type AiGenerationType, type AiProject } from "@/features/ai/ai-service";
 
 const promptTemplates = [
   "Scène de poursuite intense dans une ville nocturne, éclairage bleu, caméra dynamique.",
@@ -15,6 +15,10 @@ export default function AiStudioPage() {
   const [prompt, setPrompt] = useState<string>(promptTemplates[0] ?? "");
   const [style, setStyle] = useState("Ciné");
   const [lastJob, setLastJob] = useState<string | null>(null);
+  const [generationType, setGenerationType] = useState<AiGenerationType>("script");
+  const [generationOutput, setGenerationOutput] = useState<string | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
   const credits = useMemo(() => getAiCreditSummary(), []);
 
   const handleCreateProject = () => {
@@ -22,9 +26,20 @@ export default function AiStudioPage() {
     setProjects((current) => [created, ...current]);
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     const job = generateScene(projects[0]?.id ?? "proj-ai", prompt, style);
     setLastJob(`${job.prompt.slice(0, 62)}${job.prompt.length > 62 ? "..." : ""}`);
+    setGenerationError(null);
+    setGenerationOutput(null);
+    setGenerating(true);
+    try {
+      const result = await requestAiGeneration({ type: generationType, prompt, style });
+      setGenerationOutput(result.output ?? null);
+    } catch (error) {
+      setGenerationError(error instanceof Error ? error.message : "AI generation pa mache.");
+    } finally {
+      setGenerating(false);
+    }
   };
 
   return (
@@ -96,6 +111,19 @@ export default function AiStudioPage() {
               />
             </label>
 
+            <label className="mb-4 block text-sm text-hm-muted">
+              Jenere
+              <select
+                value={generationType}
+                onChange={(event) => setGenerationType(event.target.value as AiGenerationType)}
+                className="mt-2 w-full rounded-2xl border border-hm-border bg-hm-bg px-4 py-3 text-hm-text outline-none transition focus:border-hm-gold"
+              >
+                <option value="script">Script / tèks</option>
+                <option value="image">Imaj</option>
+                <option value="video">Videyo</option>
+              </select>
+            </label>
+
             <div className="mt-4 flex flex-wrap gap-2">
               {promptTemplates.map((template) => (
                 <button
@@ -111,7 +139,7 @@ export default function AiStudioPage() {
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-hm-muted">
-                {lastJob ? `Dernier rendu : ${lastJob}` : "Prêt pour votre prochaine création."}
+                {generating ? "AI ap travay..." : lastJob ? `Dernier rendu : ${lastJob}` : "Prêt pour votre prochaine création."}
               </p>
 
               <button
@@ -119,9 +147,11 @@ export default function AiStudioPage() {
                 onClick={handleGenerate}
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-hm-gold px-5 py-3 text-sm font-semibold text-hm-bg transition hover:opacity-90"
               >
-                Générer <ArrowRight size={16} />
+                {generating ? "Génération..." : "Générer"} <ArrowRight size={16} />
               </button>
             </div>
+            {generationError ? <p className="mt-4 rounded-xl border border-red-400/30 bg-red-950/20 p-3 text-sm text-red-300">{generationError}</p> : null}
+            {generationOutput ? <div className="mt-4 rounded-xl border border-hm-border bg-hm-bg p-4"><p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-hm-gold">Rezilta AI</p>{generationType === "image" ? <img src={generationOutput} alt="Rezilta AI" className="max-h-96 w-full rounded-lg object-contain" /> : <p className="whitespace-pre-wrap text-sm leading-6 text-hm-text">{generationOutput}</p>}</div> : null}
           </div>
 
           <aside className="rounded-3xl border border-hm-border bg-hm-surface/60 p-5">

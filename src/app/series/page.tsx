@@ -2,8 +2,18 @@ import Link from "next/link";
 import { ArrowLeft, Search, SlidersHorizontal } from "lucide-react";
 import { MediaGrid } from "@/components/media-grid";
 import { demoSeries } from "@/lib/demo-content";
+import { listPublishedContent } from "@/features/content/content-service";
 
-export default function SeriesPage() {
+export default async function SeriesPage() {
+  const publishedSeries = await listPublishedContent("series");
+  const series = publishedSeries.length > 0 ? publishedSeries.map((item) => ({
+    title: item.title,
+    meta: [item.year, item.duration].filter(Boolean).join(" · "),
+    genre: item.genre,
+    image: item.posterUrl || demoSeries[0]!.image,
+    premium: item.premium
+  })) : demoSeries;
+
   return (
     <main className="min-h-screen bg-hm-bg px-5 py-6 sm:px-8 lg:px-10">
       <header className="mx-auto flex max-w-7xl items-center justify-between">
@@ -17,7 +27,7 @@ export default function SeriesPage() {
           <div><h1 className="font-display text-4xl font-bold tracking-tight text-hm-text sm:text-5xl">Séries</h1><p className="mt-3 max-w-lg text-sm leading-6 text-hm-muted">Des saisons entières à dévorer, avec de nouveaux épisodes chaque semaine.</p></div>
           <button className="flex items-center gap-2 rounded-full border border-hm-border px-4 py-2.5 text-sm text-hm-muted transition hover:border-hm-text hover:text-hm-text"><SlidersHorizontal size={16} /> Filtrer</button>
         </div>
-        <div className="mt-10"><MediaGrid items={demoSeries} /></div>
+        <div className="mt-10"><MediaGrid items={series} /></div>
       </section>
     </main>
   );

@@ -1,51 +1,64 @@
-import Link from "next/link";
+"use client";
 
-const content = [
-  { title: "The Silent Hour", type: "Film", status: "Publié", premium: true },
-  { title: "City of Echoes", type: "Série", status: "Publié", premium: false },
-  { title: "Night Shift", type: "Film", status: "Brouillon", premium: true },
-  { title: "Red Horizon", type: "Série", status: "En revue", premium: true }
-];
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { Check, Edit3, Film, ImagePlus, Link2, Plus, Save, Trash2, UploadCloud, X } from "lucide-react";
+import { contentAssetKind, listContentItems, saveContentItem, deleteContentItem, type ContentInput, type ContentItem, type ContentType } from "@/features/content/content-service";
+import { listStorageAssets, uploadAsset, type StorageAsset } from "@/features/storage/storage-service";
+
+const emptyForm: ContentInput = { title: "", type: "movie", description: "", genre: "", year: new Date().getFullYear(), duration: "", posterUrl: "", videoUrl: "", trailerUrl: "", premium: false, status: "draft" };
 
 export default function AdminContentPage() {
+  const [items, setItems] = useState<ContentItem[]>([]);
+  const [form, setForm] = useState<ContentInput>(emptyForm);
+  const [editingId, setEditingId] = useState<string>();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState<"poster" | "video" | "trailer" | null>(null);
+  const [libraryAssets, setLibraryAssets] = useState<StorageAsset[]>([]);
+  const [assetPickerKind, setAssetPickerKind] = useState<"poster" | "video" | "trailer" | null>(null);
+  const [message, setMessage] = useState("");
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const uploadKind = useRef<"poster" | "video" | "trailer">("poster");
+
+  useEffect(() => {
+    Promise.all([listContentItems(), listStorageAssets()]).then(([contentItems, assets]) => {
+      setItems(contentItems);
+      setLibraryAssets(assets);
+    }).finally(() => setLoading(false));
+  }, []);
+  function updateField<K extends keyof ContentInput>(field: K, value: ContentInput[K]) { setForm((current) => ({ ...current, [field]: value })); }
+  function startNew(type: ContentType = "movie") { setEditingId(undefined); setForm({ ...emptyForm, type }); setMessage(""); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  function startEdit(item: ContentItem) { setEditingId(item.id); setForm(item); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  async function handleSave(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault(); if (!form.title.trim()) return; setSaving(true); setMessage("");
+    try { const saved = await saveContentItem({ ...form, id: editingId }); setItems((current) => [saved, ...current.filter((item) => item.id !== saved.id)]); setEditingId(saved.id); setForm(saved); setMessage(saved.status === "published" ? "Kontni an pibliye avèk siksè." : "Draft la anrejistre."); }
+    catch (error) { setMessage(error instanceof Error ? error.message : "Pa t posib anrejistre kontni an."); } finally { setSaving(false); }
+  }
+  function chooseUpload(kind: "poster" | "video" | "trailer") { uploadKind.current = kind; fileRef.current?.click(); }
+  function chooseLibraryAsset(asset: StorageAsset) {
+    const field = assetPickerKind === "poster" ? "posterUrl" : assetPickerKind === "video" ? "videoUrl" : "trailerUrl";
+    updateField(field, asset.url);
+    setAssetPickerKind(null);
+    setMessage(`${asset.name} asosye ak kontni an. Klike Enregistrer pou konsève li.`);
+  }
+  async function handleUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]; if (!file) return; const kind = uploadKind.current; setUploading(kind); setMessage("");
+    try { const result = await uploadAsset(file, contentAssetKind(kind)); updateField(kind === "poster" ? "posterUrl" : kind === "video" ? "videoUrl" : "trailerUrl", result.url); setMessage(`${kind === "poster" ? "Poster" : kind === "video" ? "Videyo" : "Trailer"} la pare pou anrejistre.`); }
+    catch (error) { setMessage(error instanceof Error ? error.message : "Upload la pa mache."); } finally { setUploading(null); event.target.value = ""; }
+  }
+  async function handleDelete(item: ContentItem) { if (!window.confirm(`Efase « ${item.title} »?`)) return; await deleteContentItem(item.id); setItems((current) => current.filter((currentItem) => currentItem.id !== item.id)); if (editingId === item.id) startNew(item.type); }
+
   return (
-    <div className="rounded-2xl border border-hm-border bg-hm-surface/60 p-5">
-      <div className="mb-5 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-hm-text">Contenu</h2>
-        <Link href="/admin" className="text-sm text-hm-gold">Retour dashboard</Link>
-      </div>
-
-      <div className="mb-5 flex gap-3">
-        <button className="rounded-full bg-hm-text px-4 py-2 text-sm font-medium text-hm-bg">Ajouter un film</button>
-        <button className="rounded-full border border-hm-border px-4 py-2 text-sm text-hm-text">Ajouter une série</button>
-      </div>
-
-      <div className="overflow-hidden rounded-xl border border-hm-border">
-        <table className="min-w-full text-left text-sm">
-          <thead className="bg-hm-bg text-hm-muted">
-            <tr>
-              <th className="px-4 py-3 font-medium">Titre</th>
-              <th className="px-4 py-3 font-medium">Type</th>
-              <th className="px-4 py-3 font-medium">Statut</th>
-              <th className="px-4 py-3 font-medium">Premium</th>
-            </tr>
-          </thead>
-          <tbody>
-            {content.map((item) => (
-              <tr key={item.title} className="border-t border-hm-border bg-hm-surface/30">
-                <td className="px-4 py-3 text-hm-text">{item.title}</td>
-                <td className="px-4 py-3 text-hm-muted">{item.type}</td>
-                <td className="px-4 py-3 text-hm-muted">{item.status}</td>
-                <td className="px-4 py-3">
-                  <span className={`rounded-full px-2 py-1 text-xs ${item.premium ? "bg-hm-gold/10 text-hm-gold" : "bg-hm-bg text-hm-muted"}`}>
-                    {item.premium ? "Oui" : "Non"}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-hm-gold">Bibliothèque</p><h2 className="mt-2 text-2xl font-semibold text-hm-text">Films & séries</h2></div><Link href="/admin" className="text-sm text-hm-gold">Retour dashboard</Link></div>
+      <section className="rounded-2xl border border-hm-border bg-hm-surface/60 p-5 sm:p-6"><div className="mb-5 flex flex-wrap items-center justify-between gap-3"><div><h3 className="text-lg font-semibold text-hm-text">{editingId ? "Modifier le contenu" : "Nouveau contenu"}</h3><p className="mt-1 text-sm text-hm-muted">Ajoute les informations et les fichiers avant de publier.</p></div>{editingId ? <button type="button" onClick={() => startNew()} className="inline-flex items-center gap-2 text-sm text-hm-muted hover:text-hm-text"><X size={16} /> Nouveau</button> : null}</div>
+        <form onSubmit={handleSave} className="space-y-5"><div className="grid gap-4 md:grid-cols-2"><label className="text-sm text-hm-muted">Titre<input value={form.title} onChange={(event) => updateField("title", event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-hm-border bg-hm-bg px-3 text-hm-text outline-none focus:border-hm-gold" placeholder="Ex: The Silent Hour" required /></label><label className="text-sm text-hm-muted">Type<select value={form.type} onChange={(event) => updateField("type", event.target.value as ContentType)} className="mt-2 h-11 w-full rounded-lg border border-hm-border bg-hm-bg px-3 text-hm-text outline-none focus:border-hm-gold"><option value="movie">Film</option><option value="series">Série</option></select></label><label className="text-sm text-hm-muted">Genre<input value={form.genre} onChange={(event) => updateField("genre", event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-hm-border bg-hm-bg px-3 text-hm-text outline-none focus:border-hm-gold" placeholder="Action, Drama..." /></label><div className="grid grid-cols-2 gap-4"><label className="text-sm text-hm-muted">Ane<input type="number" value={form.year ?? ""} onChange={(event) => updateField("year", event.target.value ? Number(event.target.value) : null)} className="mt-2 h-11 w-full rounded-lg border border-hm-border bg-hm-bg px-3 text-hm-text outline-none focus:border-hm-gold" /></label><label className="text-sm text-hm-muted">Durée<input value={form.duration} onChange={(event) => updateField("duration", event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-hm-border bg-hm-bg px-3 text-hm-text outline-none focus:border-hm-gold" placeholder="1h 45min" /></label></div></div><label className="block text-sm text-hm-muted">Description<textarea value={form.description} onChange={(event) => updateField("description", event.target.value)} rows={4} className="mt-2 w-full rounded-lg border border-hm-border bg-hm-bg px-3 py-3 text-sm text-hm-text outline-none focus:border-hm-gold" placeholder="Résumé du film ou de la série..." /></label>
+          <div className="grid gap-3 md:grid-cols-3">{(["poster", "video", "trailer"] as const).map((kind) => { const url = kind === "poster" ? form.posterUrl : kind === "video" ? form.videoUrl : form.trailerUrl; const field = kind === "poster" ? "posterUrl" : kind === "video" ? "videoUrl" : "trailerUrl"; return <div key={kind} className="rounded-xl border border-hm-border bg-hm-bg p-4"><div className="mb-3 flex items-center gap-2 text-sm font-medium text-hm-text">{kind === "poster" ? <ImagePlus size={16} /> : <Film size={16} />}{kind === "poster" ? "Poster" : kind === "video" ? "Film / épisode" : "Trailer"}</div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => chooseUpload(kind)} className="inline-flex items-center gap-2 rounded-lg border border-hm-border px-3 py-2 text-sm text-hm-text hover:border-hm-gold"><UploadCloud size={15} />{uploading === kind ? "Upload..." : "Uploader"}</button><button type="button" onClick={() => setAssetPickerKind(kind)} className="inline-flex items-center gap-2 rounded-lg border border-hm-border px-3 py-2 text-sm text-hm-text hover:border-hm-gold"><Film size={15} />Bibliothèque</button></div>{url ? <p className="mt-3 truncate text-xs text-hm-muted" title={url}><Link2 className="mr-1 inline" size={12} />Fichier prêt</p> : <p className="mt-3 text-xs text-hm-muted">Ou ajoute le lien ci-dessous</p>}<input value={url} onChange={(event) => updateField(field, event.target.value)} className="mt-2 h-9 w-full rounded border border-hm-border bg-hm-surface px-2 text-xs text-hm-text outline-none" placeholder="https://..." /></div>; })}</div><input ref={fileRef} type="file" accept="image/*,video/*" onChange={handleUpload} className="hidden" />
+          <div className="flex flex-wrap items-center gap-5 border-t border-hm-border pt-5"><label className="flex items-center gap-2 text-sm text-hm-muted"><input type="checkbox" checked={form.premium} onChange={(event) => updateField("premium", event.target.checked)} className="accent-hm-gold" /> Premium</label><label className="text-sm text-hm-muted">Statut<select value={form.status} onChange={(event) => updateField("status", event.target.value as ContentInput["status"])} className="ml-2 rounded-lg border border-hm-border bg-hm-bg px-3 py-2 text-sm text-hm-text"><option value="draft">Draft</option><option value="published">Publier</option></select></label><button disabled={saving} type="submit" className="ml-auto inline-flex items-center gap-2 rounded-lg bg-hm-text px-4 py-2.5 text-sm font-semibold text-hm-bg disabled:opacity-60"><Save size={16} />{saving ? "Enregistrement..." : "Enregistrer"}</button></div>{message ? <p className="text-sm text-hm-gold">{message}</p> : null}</form>
+      </section>
+      <section className="rounded-2xl border border-hm-border bg-hm-surface/60 p-5 sm:p-6"><div className="mb-4 flex items-center justify-between"><h3 className="text-lg font-semibold text-hm-text">Contenus existants</h3><div className="flex gap-2"><button type="button" onClick={() => startNew("movie")} className="inline-flex items-center gap-1 rounded-lg border border-hm-border px-3 py-2 text-xs text-hm-text"><Plus size={14} /> Film</button><button type="button" onClick={() => startNew("series")} className="inline-flex items-center gap-1 rounded-lg border border-hm-border px-3 py-2 text-xs text-hm-text"><Plus size={14} /> Série</button></div></div>{loading ? <p className="text-sm text-hm-muted">Chargement...</p> : items.length === 0 ? <p className="text-sm text-hm-muted">Pa gen kontni toujou. Kòmanse ak yon nouvo film oswa seri.</p> : <div className="space-y-2">{items.map((item) => <div key={item.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-hm-border bg-hm-bg p-3"><div className="grid h-12 w-9 shrink-0 place-items-center overflow-hidden rounded bg-hm-surface">{item.posterUrl ? <img src={item.posterUrl} alt="" className="h-full w-full object-cover" /> : <Film size={16} className="text-hm-gold" />}</div><div className="min-w-0 flex-1"><p className="truncate font-medium text-hm-text">{item.title}</p><p className="text-xs text-hm-muted">{item.type === "movie" ? "Film" : "Série"} · {item.genre || "Sans genre"} · {item.status === "published" ? "Publié" : "Draft"}</p></div>{item.status === "published" ? <span className="inline-flex items-center gap-1 text-xs text-emerald-400"><Check size={14} /> Publié</span> : null}<button type="button" onClick={() => startEdit(item)} aria-label={`Modifier ${item.title}`} className="grid h-8 w-8 place-items-center rounded-lg text-hm-muted hover:bg-hm-surface hover:text-hm-text"><Edit3 size={15} /></button><button type="button" onClick={() => handleDelete(item)} aria-label={`Efase ${item.title}`} className="grid h-8 w-8 place-items-center rounded-lg text-hm-muted hover:bg-red-950/40 hover:text-red-300"><Trash2 size={15} /></button></div>)}</div>}</section>
+      {assetPickerKind ? <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-5"><div className="max-h-[80vh] w-full max-w-2xl overflow-auto rounded-2xl border border-hm-border bg-hm-surface p-5"><div className="mb-5 flex items-center justify-between"><div><h3 className="text-lg font-semibold text-hm-text">Chwazi nan bibliothèque</h3><p className="mt-1 text-sm text-hm-muted">{assetPickerKind === "poster" ? "Chwazi yon imaj poster." : "Chwazi yon fichye videyo."}</p></div><button type="button" onClick={() => setAssetPickerKind(null)} aria-label="Fermer" className="grid h-9 w-9 place-items-center rounded-lg text-hm-muted hover:bg-hm-bg hover:text-hm-text"><X size={18} /></button></div><div className="grid gap-3 sm:grid-cols-2">{libraryAssets.filter((asset) => assetPickerKind === "poster" ? asset.type === "poster" : asset.type === "video" || asset.type === "trailer").map((asset) => <button type="button" key={asset.id} onClick={() => chooseLibraryAsset(asset)} className="flex items-center gap-3 rounded-xl border border-hm-border bg-hm-bg p-3 text-left hover:border-hm-gold">{asset.type === "poster" ? <img src={asset.url} alt="" className="h-14 w-10 rounded object-cover" /> : <span className="grid h-14 w-10 place-items-center rounded bg-hm-surface text-hm-gold"><Film size={18} /></span>}<span className="min-w-0"><strong className="block truncate text-sm text-hm-text">{asset.name}</strong><small className="text-xs text-hm-muted">{asset.type} · {asset.size.toFixed(1)} MB</small></span></button>)}</div>{libraryAssets.filter((asset) => assetPickerKind === "poster" ? asset.type === "poster" : asset.type === "video" || asset.type === "trailer").length === 0 ? <p className="py-8 text-center text-sm text-hm-muted">Pa gen fichye ki koresponn ak kalite sa a toujou.</p> : null}</div></div> : null}
     </div>
   );
 }
